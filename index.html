@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grenier Dogon — Expérience AR</title>
+  <meta name="description" content="Découvrez le savoir-faire ancestral du peuple Dogon à travers une expérience 3D et AR immersive." />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;800&display=swap" rel="stylesheet">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== ÉCRAN D'ACCUEIL ===== -->
+  <div id="intro-screen">
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="intro-card glass tech-card">
+      <div class="tech-corner tl"></div>
+      <div class="tech-corner tr"></div>
+      <div class="tech-corner bl"></div>
+      <div class="tech-corner br"></div>
+      <div class="badge">✦ PATRIMOINE VIVANT ✦</div>
+      <h1>Au cœur de la Falaise :<br><span class="gold">Bâtir un Grenier Dogon</span></h1>
+      <p>Découvrez le savoir-faire ancestral du peuple Dogon. De la terre brute au monument sacré, suivez pas à pas les étapes de construction d'un grenier traditionnel et donnez-lui vie dans votre propre espace.</p>
+      <button id="btn-start" class="btn-gold tech-btn">
+        <span>Commencer l'expérience</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== EXPÉRIENCE 3D ===== -->
+  <div id="experience-screen" class="hidden">
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- HEADER -->
+    <header class="exp-header glass">
+      <div class="header-left">
+        <span class="step-num-big gold" id="step-num">01</span>
+        <span class="step-sep">/04</span>
+      </div>
+      <div class="header-center">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="step-label" id="step-label">Le Banco</div>
+      </div>
+      <div class="header-dots" id="nav-dots"></div>
+    </header>
+
+    <!-- CORPS PRINCIPAL -->
+    <main class="exp-main">
+
+      <!-- ★ BOUTON PRÉCÉDENT (Chevron) -->
+      <div class="side-nav">
+        <button id="btn-prev" class="btn-chevron" title="Étape précédente">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- VIEWER 3D -->
+      <div class="viewer-box">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="scan-lines"></div>
+        
+        <!-- HUD Overlay -->
+        <div class="hud-overlay">
+          <!-- Panneau Gauche : Télémétrie Caméra -->
+          <div class="hud-panel hud-left">
+            <div class="hud-header-line">
+              <span class="hud-dot pulsing"></span>
+              <span class="hud-title">CAM_TELEMETRY</span>
+            </div>
+            <div class="hud-row"><span class="hud-label">COORD:</span> <span id="hud-coords" class="hud-value">X: 0.00 Y: 3.00 Z: 8.00</span></div>
+            <div class="hud-row"><span class="hud-label">ANGLE:</span> <span id="hud-rotation" class="hud-value">0.0°</span></div>
+            <div class="hud-row"><span class="hud-label">ZOOM:</span> <span id="hud-zoom" class="hud-value">1.0x</span></div>
+          </div>
+          
+          <!-- Réticule Central -->
+          <div class="hud-reticle">
+            <div class="hud-reticle-circle"></div>
+            <div class="hud-reticle-cross hair-x"></div>
+            <div class="hud-reticle-cross hair-y"></div>
+          </div>
+
+          <!-- Panneau Droite : Infos Système -->
+          <div class="hud-panel hud-right">
+            <div class="hud-header-line">
+              <span class="hud-title">SYSTEM_STATUS</span>
+            </div>
+            <div class="hud-row"><span class="hud-label">ENGINE:</span> <span class="hud-value status-ok">THREE_v184</span></div>
+            <div class="hud-row"><span class="hud-label">HOLO:</span> <span id="hud-rebuild-status" class="hud-value">READY</span></div>
+            <div class="hud-row"><span class="hud-label">AR_LINK:</span> <span class="hud-value status-ok">ACTIVE</span></div>
+          </div>
+        </div>
+
+        <!-- Conteneur Three.js -->
+        <div id="three-container"></div>
+
+        <!-- Model-viewer caché utilisé uniquement pour déclencher l'AR natif -->
+        <model-viewer
+          id="dogon-viewer"
+          src=""
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          style="display: none;"
+          loading="eager">
+        </model-viewer>
+        <div id="viewer-overlay" class="viewer-overlay"></div>
+      </div>
+
+      <!-- BULLE DESCRIPTIVE -->
+      <aside class="info-card glass" id="info-card">
+        <div class="info-card-top">
+          <div class="info-step-badge" id="info-badge">ÉTAPE 01</div>
+          <div class="info-deco-line"></div>
+        </div>
+        <h2 class="info-title gold" id="info-title">Le Banco</h2>
+        <p class="info-text" id="info-text">Les artisans préparent un mortier de terre crue et de paille hachée...</p>
+        <div class="info-card-footer">
+          <div class="info-icon-row" id="info-tags"></div>
+          <div class="info-action-buttons">
+            <button id="btn-replay" class="btn-replay" title="Rejouer la reconstitution">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              Rejouer
+            </button>
+            <button id="btn-ar-card" class="btn-ar-card">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              Voir en AR
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ★ BOUTON SUIVANT (Chevron) -->
+      <div class="side-nav">
+        <button id="btn-next" class="btn-chevron" title="Étape suivante">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+    </main>
+
+    <!-- DOTS EN BAS -->
+    <div class="bottom-dots-bar">
+      <div class="nav-center-dots" id="nav-center-dots"></div>
+    </div>
+
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
