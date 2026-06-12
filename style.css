@@ -746,13 +746,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 
   .btn-chevron .chevron-icon { width: 20px; height: 20px; }
 
-  /* === VISUALISEUR 3D : hauteur fixe responsive === */
+  /* === VISUALISEUR 3D : prend le maximum de place === */
   .viewer-box {
-    flex: none;
+    flex: 1; /* Prend tout l'espace restant */
     width: 100%;
-    height: 52vw;
-    min-height: 200px;
-    max-height: 310px;
+    height: auto;
+    min-height: 45vh;
     border-radius: 12px;
   }
 
@@ -772,13 +771,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
   .hud-reticle-cross.hair-x { width: 48px; left: -10px; }
   .hud-reticle-cross.hair-y { height: 48px; top: -10px; }
 
-  /* === CARTE INFO : bas de l'écran, prend l'espace restant === */
+  /* === CARTE INFO : bas de l'écran, réduite en taille === */
   .info-card {
-    flex: 1;
-    min-height: 0;
+    flex: none; /* Ne grandit pas */
+    height: auto;
+    max-height: 38vh; /* Limite sa hauteur pour laisser place au visualiseur */
     width: 100%;
-    padding: 0.85rem 1rem;
-    gap: 0.45rem;
+    padding: 0.75rem 0.9rem;
+    gap: 0.4rem;
     border-radius: 12px;
     overflow-y: auto;
     /* Désactiver le flottement sur mobile (évite les décalages de layout) */
@@ -793,13 +793,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
   }
 
   .info-card-top { gap: 6px; }
-  .info-title { font-size: 1rem; }
+  .info-title { font-size: 0.95rem; }
   .info-text {
-    font-size: 0.76rem;
-    line-height: 1.55;
+    font-size: 0.72rem;
+    line-height: 1.45;
   }
 
-  .info-card-footer { padding-top: 0.45rem; gap: 0.5rem; }
+  .info-card-footer { padding-top: 0.35rem; gap: 0.4rem; }
   .info-action-buttons { gap: 6px; }
 
   .btn-ar-card, .btn-replay {
