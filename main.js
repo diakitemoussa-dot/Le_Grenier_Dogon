@@ -70,6 +70,16 @@ const btnReplay        = document.getElementById('btn-replay');
 const hiddenViewer     = document.getElementById('dogon-viewer'); // Pour l'AR
 const btnArViewer      = document.getElementById('btn-ar-viewer'); // Bouton AR sur le viewer
 
+// S'assurer que l'animation est réinitialisée et jouée au lancement de l'AR
+if (hiddenViewer) {
+  hiddenViewer.addEventListener('ar-status', (event) => {
+    if (event.detail.status === 'session-started') {
+      hiddenViewer.currentTime = 0;
+      hiddenViewer.play();
+    }
+  });
+}
+
 let currentIndex = 0;
 let isTransitioning = false;
 
@@ -642,6 +652,11 @@ function goToStep(index) {
     // Mettre à jour le model-viewer caché pour l'AR
     if (hiddenViewer) {
       hiddenViewer.src = step.model;
+      if (step.id === 4) {
+        hiddenViewer.setAttribute('animation-name', 'Window');
+      } else {
+        hiddenViewer.removeAttribute('animation-name');
+      }
       hiddenViewer.addEventListener('load', () => hiddenViewer.play(), { once: true });
     }
 
@@ -754,6 +769,11 @@ function startExperience() {
 
         if (hiddenViewer) {
           hiddenViewer.src = step.model;
+          if (step.id === 4) {
+            hiddenViewer.setAttribute('animation-name', 'Window');
+          } else {
+            hiddenViewer.removeAttribute('animation-name');
+          }
           hiddenViewer.addEventListener('load', () => hiddenViewer.play(), { once: true });
         }
         loadModel(step.model);
