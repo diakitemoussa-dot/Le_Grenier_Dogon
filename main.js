@@ -7,6 +7,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 // GRENIER DOGON — LOGIQUE SPA V4 (Three.js)
 // ============================================
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 const STEPS = [
   {
     id: 1,
@@ -15,7 +17,7 @@ const STEPS = [
     badge: "ÉTAPE 01",
     text: "Les artisans préparent un mortier de terre crue et de paille hachée. La paille est essentielle : elle sert de liant pour éviter que la terre ne se fissure en séchant au soleil ardent de la falaise.",
     tags: ["Terre & Paille", "Liant naturel"],
-    model: "./asset/1_banco.glb"
+    model: `${BASE_URL}1_banco.glb`
   },
   {
     id: 2,
@@ -24,7 +26,7 @@ const STEPS = [
     badge: "ÉTAPE 02",
     text: "Le grenier ne touche jamais le sol directement. Il est surélevé sur des pierres soigneusement choisies pour protéger les récoltes des remontées d'humidité et des attaques des termites.",
     tags: ["Pierres locales", "Protection récolte"],
-    model: "./asset/2_fondations.glb"
+    model: `${BASE_URL}2_fondations.glb`
   },
   {
     id: 3,
@@ -33,7 +35,7 @@ const STEPS = [
     badge: "ÉTAPE 03",
     text: "Le maçon monte les murs par couches successives appelées 'assises'. Chaque niveau sèche au soleil avant le suivant. Ces murs épais de banco maintiennent les grains au frais toute l'année.",
     tags: ["Banco par couches", "Isolation naturelle"],
-    model: "./asset/3_murs.glb"
+    model: `${BASE_URL}3_murs.glb`
   },
   {
     id: 4,
@@ -42,7 +44,7 @@ const STEPS = [
     badge: "ÉTAPE 04",
     text: "Cette structure conique en branches et paille tressée protège l'édifice. Véritable parapluie, ce toit pointu empêche les pluies torrentielles de dissoudre les murs en terre crue pendant l'hivernage.",
     tags: ["Chaume tressé", "Protection pluie"],
-    model: "./asset/4_toit.glb"
+    model: `${BASE_URL}4_toit.glb`
   }
 ];
 
