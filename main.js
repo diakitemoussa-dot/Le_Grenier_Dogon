@@ -640,7 +640,10 @@ function goToStep(index) {
     progressFill.style.width = `${((index + 1) / STEPS.length) * 100}%`;
 
     // Mettre à jour le model-viewer caché pour l'AR
-    if (hiddenViewer) hiddenViewer.src = step.model;
+    if (hiddenViewer) {
+      hiddenViewer.src = step.model;
+      hiddenViewer.addEventListener('load', () => hiddenViewer.play(), { once: true });
+    }
 
     // Charger le modèle 3D
     loadModel(step.model, () => {
@@ -749,7 +752,10 @@ function startExperience() {
         if (stepLabel) stepLabel.textContent = step.label;
         if (progressFill) progressFill.style.width = '25%';
 
-        if (hiddenViewer) hiddenViewer.src = step.model;
+        if (hiddenViewer) {
+          hiddenViewer.src = step.model;
+          hiddenViewer.addEventListener('load', () => hiddenViewer.play(), { once: true });
+        }
         loadModel(step.model);
 
         updateInfoCard(step);
