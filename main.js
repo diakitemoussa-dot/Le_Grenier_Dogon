@@ -15,7 +15,7 @@ const STEPS = [
     badge: "ÉTAPE 01",
     text: "Les artisans préparent un mortier de terre crue et de paille hachée. La paille est essentielle : elle sert de liant pour éviter que la terre ne se fissure en séchant au soleil ardent de la falaise.",
     tags: ["Terre & Paille", "Liant naturel"],
-    model: "https://raw.githubusercontent.com/diakitemoussa-dot/Les_Model_3D_GLB/main/1_banco.glb"
+    model: "./asset/1_banco.glb"
   },
   {
     id: 2,
@@ -24,7 +24,7 @@ const STEPS = [
     badge: "ÉTAPE 02",
     text: "Le grenier ne touche jamais le sol directement. Il est surélevé sur des pierres soigneusement choisies pour protéger les récoltes des remontées d'humidité et des attaques des termites.",
     tags: ["Pierres locales", "Protection récolte"],
-    model: "https://raw.githubusercontent.com/diakitemoussa-dot/Les_Model_3D_GLB/main/2_fondations.glb"
+    model: "./asset/2_fondations.glb"
   },
   {
     id: 3,
@@ -33,7 +33,7 @@ const STEPS = [
     badge: "ÉTAPE 03",
     text: "Le maçon monte les murs par couches successives appelées 'assises'. Chaque niveau sèche au soleil avant le suivant. Ces murs épais de banco maintiennent les grains au frais toute l'année.",
     tags: ["Banco par couches", "Isolation naturelle"],
-    model: "https://raw.githubusercontent.com/diakitemoussa-dot/Les_Model_3D_GLB/main/3_murs.glb"
+    model: "./asset/3_murs.glb"
   },
   {
     id: 4,
@@ -42,7 +42,7 @@ const STEPS = [
     badge: "ÉTAPE 04",
     text: "Cette structure conique en branches et paille tressée protège l'édifice. Véritable parapluie, ce toit pointu empêche les pluies torrentielles de dissoudre les murs en terre crue pendant l'hivernage.",
     tags: ["Chaume tressé", "Protection pluie"],
-    model: "https://raw.githubusercontent.com/diakitemoussa-dot/Les_Model_3D_GLB/main/4_toit.glb"
+    model: "./asset/4_toit.glb"
   }
 ];
 
@@ -431,9 +431,15 @@ function startRebuildAnimation() {
 // Loader GLTF
 const gltfLoader = new GLTFLoader();
 let currentModel = null;
+let mixer = null;
+const clock = new THREE.Clock();
 
 function loadModel(url, callback) {
   if (currentModel) {
+    if (mixer) {
+      mixer.stopAllAction();
+      mixer = null;
+    }
     // Dispose resources to avoid memory leaks
     disposeModel(currentModel);
     mainGroup.remove(currentModel);
@@ -459,6 +465,14 @@ function loadModel(url, callback) {
       currentModel.position.sub(center.multiplyScalar(scale));
       currentModel.position.y += (size.y * scale) / 2 - 0.5;
 
+      // Initialiser et jouer l'animation si elle existe
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(currentModel);
+        gltf.animations.forEach((clip) => {
+          mixer.clipAction(clip).play();
+        });
+      }
+
       mainGroup.add(currentModel);
       
       startRebuildAnimation(); // Démarrer l'effet de reconstitution
@@ -476,6 +490,10 @@ function loadModel(url, callback) {
 // Animation Loop
 function animate() {
   requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  if (mixer) {
+    mixer.update(delta);
+  }
   controls.update();
   
   // Mettre à jour les données télémétriques du HUD
