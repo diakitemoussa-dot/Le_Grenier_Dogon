@@ -45,6 +45,17 @@ const STEPS = [
     text: "Cette structure conique en branches et paille tressée protège l'édifice. Véritable parapluie, ce toit pointu empêche les pluies torrentielles de dissoudre les murs en terre crue pendant l'hivernage.",
     tags: ["Chaume tressé", "Protection pluie"],
     model: `${BASE_URL}4_toit.glb`
+  },
+  {
+    id: 5,
+    label: "Étape 5 : La Reconstitution",
+    title: "Le Grenier Vivant",
+    badge: "ÉTAPE 05",
+    text: "Découvrez en images la reconstitution complète du grenier Dogon, de la terre brute au monument achevé. Une séquence vidéo qui réunit tout le savoir-faire ancestral présenté lors des étapes précédentes.",
+    tags: ["Séquence vidéo", "Vue d'ensemble"],
+    isVideo: true,
+    videoDesktop: `${BASE_URL}grenier_desktop.mp4`,
+    videoMobile: `${BASE_URL}grenier_mobile.mp4`
   }
 ];
 
@@ -69,6 +80,19 @@ const btnArCard        = document.getElementById('btn-ar-card');
 const btnReplay        = document.getElementById('btn-replay');
 const hiddenViewer     = document.getElementById('dogon-viewer'); // Pour l'AR
 const btnArViewer      = document.getElementById('btn-ar-viewer'); // Bouton AR sur le viewer
+
+// Refs pour l'étape vidéo (étape 5)
+const viewerBox        = document.querySelector('.viewer-box');
+const hudOverlay       = document.querySelector('.hud-overlay');
+const videoStage       = document.getElementById('video-stage');
+const dogonVideo       = document.getElementById('dogon-video');
+const videoLoader      = document.getElementById('video-loader');
+
+// Choisit la bonne source vidéo selon la taille de l'écran
+const mobileQuery = window.matchMedia('(max-width: 768px)');
+function pickVideoSrc(step) {
+  return mobileQuery.matches ? step.videoMobile : step.videoDesktop;
+}
 
 // S'assurer que l'animation est réinitialisée et jouée au lancement de l'AR
 if (hiddenViewer) {
@@ -630,6 +654,66 @@ function updateInfoCard(step) {
 }
 
 // ============================================
+// MODE VIDÉO (ÉTAPE 5)
+// ============================================
+function enterVideoMode(step) {
+  // Masquer la scène 3D et la télémétrie, afficher la vidéo
+  if (threeContainer) threeContainer.style.display = 'none';
+  if (hudOverlay) hudOverlay.style.display = 'none';
+  if (viewerBox) viewerBox.classList.add('video-mode');
+  if (videoStage) videoStage.classList.remove('hidden');
+
+  // Cacher le bouton AR (pas de modèle en AR ici), adapter le bouton "Rejouer"
+  if (btnArCard) btnArCard.style.display = 'none';
+
+  // Choisir la source selon l'écran et lancer la lecture
+  if (dogonVideo) {
+    const src = pickVideoSrc(step);
+    if (dogonVideo.getAttribute('src') !== src) {
+      dogonVideo.setAttribute('src', src);
+      dogonVideo.load();
+    }
+    if (videoLoader) videoLoader.classList.remove('hidden-soft');
+    dogonVideo.currentTime = 0;
+    const playPromise = dogonVideo.play();
+    if (playPromise && playPromise.catch) {
+      playPromise.catch(() => { /* lecture auto bloquée : l'utilisateur lancera via les contrôles */ });
+    }
+  }
+}
+
+function exitVideoMode() {
+  if (dogonVideo) {
+    dogonVideo.pause();
+  }
+  if (videoStage) videoStage.classList.add('hidden');
+  if (threeContainer) threeContainer.style.display = '';
+  if (hudOverlay) hudOverlay.style.display = '';
+  if (viewerBox) viewerBox.classList.remove('video-mode');
+  if (btnArCard) btnArCard.style.display = '';
+}
+
+// Masquer le loader dès que la vidéo peut être lue
+if (dogonVideo && videoLoader) {
+  dogonVideo.addEventListener('playing', () => videoLoader.classList.add('hidden-soft'));
+  dogonVideo.addEventListener('canplay', () => videoLoader.classList.add('hidden-soft'));
+}
+
+// Si l'écran bascule entre grand/petit format pendant la lecture, changer de source
+mobileQuery.addEventListener('change', () => {
+  const step = STEPS[currentIndex];
+  if (!step || !step.isVideo || !dogonVideo) return;
+  const wasPlaying = !dogonVideo.paused;
+  const t = dogonVideo.currentTime;
+  dogonVideo.setAttribute('src', pickVideoSrc(step));
+  dogonVideo.load();
+  dogonVideo.addEventListener('loadedmetadata', () => {
+    dogonVideo.currentTime = t;
+    if (wasPlaying) dogonVideo.play().catch(() => {});
+  }, { once: true });
+});
+
+// ============================================
 // CHANGER D'ÉTAPE AVEC TRANSITION
 // ============================================
 function goToStep(index) {
@@ -649,23 +733,34 @@ function goToStep(index) {
     stepLabel.textContent = step.label;
     progressFill.style.width = `${((index + 1) / STEPS.length) * 100}%`;
 
-    // Mettre à jour le model-viewer caché pour l'AR
-    if (hiddenViewer) {
-      hiddenViewer.src = step.model;
-      if (step.id === 4) {
-        hiddenViewer.setAttribute('animation-name', 'Window');
-      } else {
-        hiddenViewer.removeAttribute('animation-name');
-      }
-      hiddenViewer.addEventListener('load', () => hiddenViewer.play(), { once: true });
-    }
-
-    // Charger le modèle 3D
-    loadModel(step.model, () => {
-      // Quand c'est chargé, on enlève l'overlay
+    if (step.isVideo) {
+      // Étape vidéo : pas de modèle 3D ni d'AR
+      if (hiddenViewer) hiddenViewer.removeAttribute('src');
+      enterVideoMode(step);
       viewerOverlay.classList.remove('active');
       isTransitioning = false;
-    });
+    } else {
+      // On quitte éventuellement le mode vidéo
+      exitVideoMode();
+
+      // Mettre à jour le model-viewer caché pour l'AR
+      if (hiddenViewer) {
+        hiddenViewer.src = step.model;
+        if (step.id === 4) {
+          hiddenViewer.setAttribute('animation-name', 'Window');
+        } else {
+          hiddenViewer.removeAttribute('animation-name');
+        }
+        hiddenViewer.addEventListener('load', () => hiddenViewer.play(), { once: true });
+      }
+
+      // Charger le modèle 3D
+      loadModel(step.model, () => {
+        // Quand c'est chargé, on enlève l'overlay
+        viewerOverlay.classList.remove('active');
+        isTransitioning = false;
+      });
+    }
 
     // Bulle info
     infoCard.classList.remove('fade-out');
@@ -793,6 +888,15 @@ if (btnNext) btnNext.addEventListener('click', () => { if (currentIndex < STEPS.
 if (btnPrev) btnPrev.addEventListener('click', () => { if (currentIndex > 0) goToStep(currentIndex - 1); });
 if (btnReplay) {
   btnReplay.addEventListener('click', () => {
+    const step = STEPS[currentIndex];
+    if (step && step.isVideo) {
+      // À l'étape vidéo : relancer la séquence depuis le début
+      if (dogonVideo) {
+        dogonVideo.currentTime = 0;
+        dogonVideo.play().catch(() => {});
+      }
+      return;
+    }
     if (!isRebuilding && !isTransitioning) {
       startRebuildAnimation();
     }

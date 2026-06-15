@@ -105,6 +105,15 @@
         <!-- Conteneur Three.js -->
         <div id="three-container"></div>
 
+        <!-- ===== ÉTAPE 5 : SCÈNE VIDÉO (pas de modèle 3D) ===== -->
+        <div id="video-stage" class="video-stage hidden">
+          <video id="dogon-video" class="dogon-video" playsinline controls preload="metadata"></video>
+          <div class="video-loader" id="video-loader">
+            <span class="video-loader-spin"></span>
+            <span class="video-loader-text">CHARGEMENT DE LA SÉQUENCE…</span>
+          </div>
+        </div>
+
         <!-- Model-viewer caché utilisé uniquement pour déclencher l'AR natif -->
         <model-viewer
           id="dogon-viewer"

@@ -323,6 +323,58 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg);
 .viewer-overlay.active { opacity: 1; }
 
 /* ============================================
+   ÉTAPE 5 — SCÈNE VIDÉO
+   ============================================ */
+.video-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 50%, #1E1525 0%, #0F0B12 100%);
+  padding: 2.2rem;
+}
+.dogon-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #000;
+  box-shadow: 0 0 40px rgba(249, 213, 139, 0.15), inset 0 0 0 1px rgba(195,165,199,0.2);
+  outline: none;
+}
+.video-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.video-loader.hidden-soft { opacity: 0; }
+.video-loader-spin {
+  width: 38px; height: 38px;
+  border: 2px solid rgba(249,213,139,0.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: videoSpin 0.9s linear infinite;
+}
+.video-loader-text {
+  font-family: monospace;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  color: rgba(249,213,139,0.55);
+}
+@keyframes videoSpin { to { transform: rotate(360deg); } }
+
+/* Quand on est en mode vidéo, on masque le label télémétrie 3D du viewer-box */
+.viewer-box.video-mode::after { content: "SÉQUENCE FINALE — LECTURE VIDÉO"; }
+
+/* ============================================
    HUD OVERLAY (TÉLÉMÉTRIE EN TEMPS RÉEL)
    ============================================ */
 .hud-overlay {
