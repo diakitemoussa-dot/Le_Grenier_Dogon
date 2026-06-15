@@ -87,12 +87,21 @@ const hudOverlay       = document.querySelector('.hud-overlay');
 const videoStage       = document.getElementById('video-stage');
 const dogonVideo       = document.getElementById('dogon-video');
 const videoLoader      = document.getElementById('video-loader');
+const videoPlayOverlay = document.getElementById('video-play-overlay');
+const videoMuteBtn     = document.getElementById('video-mute-btn');
 
 // Choisit la bonne source vidéo selon la taille de l'écran
 const mobileQuery = window.matchMedia('(max-width: 768px)');
 function pickVideoSrc(step) {
   return mobileQuery.matches ? step.videoMobile : step.videoDesktop;
 }
+
+// Refs pour la barre de préchargement (écran d'accueil)
+const preloadRow   = document.getElementById('preload-row');
+const preloadFill  = document.getElementById('preload-fill');
+const preloadLabel = document.getElementById('preload-label');
+
+let videoPreloadStarted = false;
 
 // S'assurer que l'animation est réinitialisée et jouée au lancement de l'AR
 if (hiddenViewer) {
@@ -125,6 +134,10 @@ const hudRebuildStatus = document.getElementById('hud-rebuild-status');
 // ============================================
 // THREE.JS SETUP
 // ============================================
+// Activer le cache des fichiers : GLTFLoader utilise THREE.FileLoader en interne,
+// qui respecte ce cache (clé = URL). Permet de précharger les .glb en arrière-plan.
+THREE.Cache.enabled = true;
+
 const scene = new THREE.Scene();
 
 // Utiliser des dimensions par défaut si le conteneur est masqué au chargement
@@ -523,6 +536,51 @@ function loadModel(url, callback) {
   );
 }
 
+// ============================================
+// PRÉCHARGEMENT EN ARRIÈRE-PLAN
+// ============================================
+// Réchauffe le cache Three.js (FileLoader) pour tous les modèles .glb.
+// Une fois en cache, gltfLoader.load() lira sans réseau : navigation quasi instantanée.
+function preloadModels(onProgress, onComplete) {
+  const fileLoader = new THREE.FileLoader();
+  fileLoader.setResponseType('arraybuffer');
+
+  const models = STEPS.filter(s => s.model).map(s => s.model);
+  const total = models.length;
+  let settled = 0;
+
+  if (total === 0) { if (onComplete) onComplete(); return; }
+
+  const tick = () => {
+    settled++;
+    if (onProgress) onProgress(settled, total);
+    if (settled >= total && onComplete) onComplete();
+  };
+
+  models.forEach((url) => {
+    fileLoader.load(
+      url,
+      () => tick(),
+      undefined,
+      (err) => {
+        console.error('Préchargement échoué pour', url, err);
+        tick(); // On compte quand même : loadModel retéléchargera à la volée si besoin
+      }
+    );
+  });
+}
+
+// Démarre le téléchargement de la vidéo en arrière-plan (élément déjà masqué).
+function preloadVideo() {
+  if (videoPreloadStarted || !dogonVideo) return;
+  videoPreloadStarted = true;
+  const src = pickVideoSrc(STEPS[4]);
+  if (dogonVideo.getAttribute('src') !== src) {
+    dogonVideo.setAttribute('src', src);
+    dogonVideo.load();
+  }
+}
+
 // Animation Loop
 function animate() {
   requestAnimationFrame(animate);
@@ -674,10 +732,14 @@ function enterVideoMode(step) {
       dogonVideo.load();
     }
     if (videoLoader) videoLoader.classList.remove('hidden-soft');
+    // Son activé par défaut (l'arrivée à l'étape 5 suit un clic = lecture sonore autorisée)
+    dogonVideo.muted = false;
+    if (dogonVideo.volume === 0) dogonVideo.volume = 1;
+    updateMuteButton();
     dogonVideo.currentTime = 0;
     const playPromise = dogonVideo.play();
     if (playPromise && playPromise.catch) {
-      playPromise.catch(() => { /* lecture auto bloquée : l'utilisateur lancera via les contrôles */ });
+      playPromise.catch(() => { /* lecture auto bloquée : l'utilisateur lancera via le bouton ▶ */ });
     }
   }
 }
@@ -697,6 +759,48 @@ function exitVideoMode() {
 if (dogonVideo && videoLoader) {
   dogonVideo.addEventListener('playing', () => videoLoader.classList.add('hidden-soft'));
   dogonVideo.addEventListener('canplay', () => videoLoader.classList.add('hidden-soft'));
+}
+
+// Contrôle lecture/pause sans barre de progression (contrôles natifs retirés)
+function toggleVideoPlayback() {
+  if (!dogonVideo) return;
+  if (dogonVideo.paused) {
+    dogonVideo.play().catch(() => {});
+  } else {
+    dogonVideo.pause();
+  }
+}
+if (dogonVideo) {
+  // Clic sur la vidéo ou sur le bouton central = lecture/pause
+  dogonVideo.addEventListener('click', toggleVideoPlayback);
+  if (videoPlayOverlay) videoPlayOverlay.addEventListener('click', toggleVideoPlayback);
+
+  // Le bouton central apparaît en pause, disparaît pendant la lecture
+  dogonVideo.addEventListener('play', () => {
+    if (videoPlayOverlay) videoPlayOverlay.classList.add('hidden-soft');
+  });
+  dogonVideo.addEventListener('pause', () => {
+    if (videoPlayOverlay) videoPlayOverlay.classList.remove('hidden-soft');
+  });
+  dogonVideo.addEventListener('ended', () => {
+    if (videoPlayOverlay) videoPlayOverlay.classList.remove('hidden-soft');
+  });
+}
+
+// Bouton couper / activer le son
+function updateMuteButton() {
+  if (!videoMuteBtn || !dogonVideo) return;
+  videoMuteBtn.classList.toggle('muted', dogonVideo.muted);
+  videoMuteBtn.setAttribute('aria-label', dogonVideo.muted ? 'Activer le son' : 'Couper le son');
+}
+if (videoMuteBtn && dogonVideo) {
+  videoMuteBtn.addEventListener('click', () => {
+    dogonVideo.muted = !dogonVideo.muted;
+    if (!dogonVideo.muted && dogonVideo.volume === 0) dogonVideo.volume = 1;
+    updateMuteButton();
+  });
+  // Garder l'icône synchro si l'état change autrement
+  dogonVideo.addEventListener('volumechange', updateMuteButton);
 }
 
 // Si l'écran bascule entre grand/petit format pendant la lecture, changer de source
@@ -727,6 +831,9 @@ function goToStep(index) {
   setTimeout(() => {
     currentIndex = index;
     const step = STEPS[index];
+
+    // À partir de l'étape 3, précharger la vidéo en arrière-plan
+    if (index >= 2) preloadVideo();
 
     // Header
     stepNumEl.textContent = String(step.id).padStart(2, '0');
@@ -860,7 +967,7 @@ function startExperience() {
         currentIndex = 0;
         if (stepNumEl) stepNumEl.textContent = '01';
         if (stepLabel) stepLabel.textContent = step.label;
-        if (progressFill) progressFill.style.width = '25%';
+        if (progressFill) progressFill.style.width = `${(1 / STEPS.length) * 100}%`;
 
         if (hiddenViewer) {
           hiddenViewer.src = step.model;
@@ -907,3 +1014,41 @@ if (btnReplay) {
 // INIT
 // ============================================
 buildDots();
+
+// ============================================
+// PRÉCHARGEMENT AU DÉMARRAGE + GATING DU BOUTON
+// ============================================
+function startPreloading() {
+  if (btnStart) {
+    btnStart.disabled = true;
+    btnStart.classList.add('is-loading');
+    const span = btnStart.querySelector('span');
+    if (span) span.textContent = 'Préparation… 0 %';
+  }
+
+  const finishGate = () => {
+    if (btnStart) {
+      btnStart.disabled = false;
+      btnStart.classList.remove('is-loading');
+      const span = btnStart.querySelector('span');
+      if (span) span.textContent = "Commencer l'expérience";
+    }
+    if (preloadFill) preloadFill.style.width = '100%';
+    if (preloadLabel) preloadLabel.textContent = 'Expérience prête';
+    if (preloadRow) {
+      setTimeout(() => preloadRow.classList.add('done'), 400);
+    }
+  };
+
+  preloadModels(
+    (done, total) => {
+      const pct = Math.round((done / total) * 100);
+      if (preloadFill) preloadFill.style.width = `${pct}%`;
+      if (preloadLabel) preloadLabel.textContent = `Préchargement des modèles… ${done}/${total}`;
+      const span = btnStart && btnStart.querySelector('span');
+      if (span && btnStart.disabled) span.textContent = `Préparation… ${pct} %`;
+    },
+    finishGate
+  );
+}
+startPreloading();

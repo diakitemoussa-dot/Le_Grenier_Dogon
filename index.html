@@ -24,11 +24,15 @@
       <div class="tech-corner br"></div>
       <div class="badge">✦ PATRIMOINE VIVANT ✦</div>
       <h1>Au cœur de la Falaise :<br><span class="gold">Bâtir un Grenier Dogon</span></h1>
-      <p>Découvrez le savoir-faire ancestral du peuple Dogon. De la terre brute au monument sacré, suivez pas à pas les étapes de construction d'un grenier traditionnel et donnez-lui vie dans votre propre espace.</p>
+      <p>Découvrez le savoir-faire ancestral du peuple Dogon. De la terre brute au monument sacré, suivez pas à pas les étapes de construction d'un grenier Dogon et donnez-lui vie dans votre propre espace.</p>
       <button id="btn-start" class="btn-gold tech-btn">
         <span>Commencer l'expérience</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
+      <div class="preload-row" id="preload-row">
+        <div class="preload-track"><div class="preload-fill" id="preload-fill"></div></div>
+        <span class="preload-label" id="preload-label">Préparation de l'expérience…</span>
+      </div>
     </div>
   </div>
 
@@ -42,7 +46,7 @@
     <header class="exp-header glass">
       <div class="header-left">
         <span class="step-num-big gold" id="step-num">01</span>
-        <span class="step-sep">/04</span>
+        <span class="step-sep">/05</span>
       </div>
       <div class="header-center">
         <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
@@ -107,7 +111,14 @@
 
         <!-- ===== ÉTAPE 5 : SCÈNE VIDÉO (pas de modèle 3D) ===== -->
         <div id="video-stage" class="video-stage hidden">
-          <video id="dogon-video" class="dogon-video" playsinline controls preload="metadata"></video>
+          <video id="dogon-video" class="dogon-video" playsinline preload="auto"></video>
+          <button id="video-play-overlay" class="video-play-overlay" aria-label="Lire la vidéo">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button id="video-mute-btn" class="video-mute-btn" aria-label="Couper le son">
+            <svg class="ico-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            <svg class="ico-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+          </button>
           <div class="video-loader" id="video-loader">
             <span class="video-loader-spin"></span>
             <span class="video-loader-text">CHARGEMENT DE LA SÉQUENCE…</span>
