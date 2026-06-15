@@ -547,27 +547,38 @@ function preloadModels(onProgress, onComplete) {
 
   const models = STEPS.filter(s => s.model).map(s => s.model);
   const total = models.length;
-  let settled = 0;
 
   if (total === 0) { if (onComplete) onComplete(); return; }
 
-  const tick = () => {
-    settled++;
-    if (onProgress) onProgress(settled, total);
-    if (settled >= total && onComplete) onComplete();
-  };
+  // Chargement séquentiel (un modèle à la fois, dans l'ordre des étapes) :
+  // les premières étapes sont prêtes en priorité, sans saturer la bande passante.
+  let index = 0;
+  let settled = 0;
 
-  models.forEach((url) => {
+  const loadNext = () => {
+    if (index >= total) return;
+    const url = models[index++];
+    const done = () => {
+      settled++;
+      if (onProgress) onProgress(settled, total);
+      if (settled >= total) {
+        if (onComplete) onComplete();
+      } else {
+        loadNext();
+      }
+    };
     fileLoader.load(
       url,
-      () => tick(),
+      () => done(),
       undefined,
       (err) => {
         console.error('Préchargement échoué pour', url, err);
-        tick(); // On compte quand même : loadModel retéléchargera à la volée si besoin
+        done(); // On continue : loadModel retéléchargera à la volée si besoin
       }
     );
-  });
+  };
+
+  loadNext();
 }
 
 // Démarre le téléchargement de la vidéo en arrière-plan (élément déjà masqué).
@@ -1016,23 +1027,12 @@ if (btnReplay) {
 buildDots();
 
 // ============================================
-// PRÉCHARGEMENT AU DÉMARRAGE + GATING DU BOUTON
+// PRÉCHARGEMENT EN ARRIÈRE-PLAN (NON BLOQUANT)
 // ============================================
+// Le bouton « Commencer » reste actif immédiatement : le 1er modèle (banco, ~0,5 Mo)
+// se charge dès le clic, et les autres modèles continuent de se précharger en fond.
 function startPreloading() {
-  if (btnStart) {
-    btnStart.disabled = true;
-    btnStart.classList.add('is-loading');
-    const span = btnStart.querySelector('span');
-    if (span) span.textContent = 'Préparation… 0 %';
-  }
-
   const finishGate = () => {
-    if (btnStart) {
-      btnStart.disabled = false;
-      btnStart.classList.remove('is-loading');
-      const span = btnStart.querySelector('span');
-      if (span) span.textContent = "Commencer l'expérience";
-    }
     if (preloadFill) preloadFill.style.width = '100%';
     if (preloadLabel) preloadLabel.textContent = 'Expérience prête';
     if (preloadRow) {
@@ -1044,9 +1044,7 @@ function startPreloading() {
     (done, total) => {
       const pct = Math.round((done / total) * 100);
       if (preloadFill) preloadFill.style.width = `${pct}%`;
-      if (preloadLabel) preloadLabel.textContent = `Préchargement des modèles… ${done}/${total}`;
-      const span = btnStart && btnStart.querySelector('span');
-      if (span && btnStart.disabled) span.textContent = `Préparation… ${pct} %`;
+      if (preloadLabel) preloadLabel.textContent = `Optimisation en cours… ${done}/${total}`;
     },
     finishGate
   );
