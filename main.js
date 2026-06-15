@@ -51,7 +51,7 @@ const STEPS = [
     label: "Étape 5 : La Reconstitution",
     title: "Le Grenier Vivant",
     badge: "ÉTAPE 05",
-    text: "Découvrez en images la reconstitution complète du grenier Dogon, de la terre brute au monument achevé. Une séquence vidéo qui réunit tout le savoir-faire ancestral présenté lors des étapes précédentes.",
+    text: "Découvrez en images la reconstitution complète du grenier Dogon, de la terre brute au monument achevé. Une séquence vidéo qui réunit tout le savoir-faire andogène présenté lors des étapes précédentes.",
     tags: ["Séquence vidéo", "Vue d'ensemble"],
     isVideo: true,
     videoDesktop: `${BASE_URL}grenier_desktop.mp4`,
